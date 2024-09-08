@@ -20,34 +20,35 @@ import java.util.List;
 @RequestMapping("/items")
 public class ItemController {
 
+    public static final String X_SHARER_USER_ID = "X-Sharer-User-Id";
     private final ItemService itemService;
 
     @PostMapping
-    public ResponseEntity<ItemDto> createItem(@Valid @RequestHeader("X-Sharer-User-Id") Long userId,
+    public ResponseEntity<ItemDto> createItem(@Valid @RequestHeader(X_SHARER_USER_ID) Long userId,
                                               @Valid @RequestBody ItemDto itemDto) {
         ItemDto createdItem = itemService.createItem(userId, itemDto);
         log.info("Received POST request createItem with userId: {}", userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdItem);
     }
 
-    @PatchMapping("/{item_id}")
-    public ResponseEntity<ItemDto> patchItem(@Valid @RequestHeader("X-Sharer-User-Id") Long userId,
-                                             @Valid @PathVariable(name = "item_id") Long itemId,
+    @PatchMapping("/{item-id}")
+    public ResponseEntity<ItemDto> patchItem(@Valid @RequestHeader(X_SHARER_USER_ID) Long userId,
+                                             @Valid @PathVariable(name = "item-id") Long itemId,
                                              @RequestBody ItemDto itemDto) {
         ItemDto updatedItem = itemService.patchItem(userId, itemId, itemDto);
         log.info("Received PATCH request patchItem for itemId: {}", itemId);
         return ResponseEntity.ok(updatedItem);
     }
 
-    @GetMapping("/{item_id}")
-    public ResponseEntity<ItemDto> getItemById(@Valid @PathVariable(name = "item_id") Long itemId) {
+    @GetMapping("/{item-id}")
+    public ResponseEntity<ItemDto> getItemById(@Valid @PathVariable(name = "item-id") Long itemId) {
         ItemDto item = itemService.getItemById(itemId);
         log.info("Received GET request getItemById with itemId: {}", itemId);
         return ResponseEntity.ok(item);
     }
 
     @GetMapping
-    public ResponseEntity<List<ItemDto>> getAllItems(@Valid @RequestHeader("X-Sharer-User-Id") Long userId) {
+    public ResponseEntity<List<ItemDto>> getAllItems(@Valid @RequestHeader(X_SHARER_USER_ID) Long userId) {
         List<ItemDto> itemDtoList = itemService.getAllItemsByUserId(userId);
         log.info("Received GET request getAllItems for userId: {}", userId);
         return ResponseEntity.ok(itemDtoList);

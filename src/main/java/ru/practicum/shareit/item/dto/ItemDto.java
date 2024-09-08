@@ -23,4 +23,5 @@ public class ItemDto {
 
     @NotNull(message = "Статус доступности предмета должен быть определен")
     Boolean available;
+
 }

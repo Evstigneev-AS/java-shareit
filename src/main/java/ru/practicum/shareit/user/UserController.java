@@ -29,15 +29,15 @@ public class UserController {
         return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 
-    @PatchMapping("/{user_id}")
-    public ResponseEntity<UserDto> patchUser(@PathVariable(name = "user_id") Long userId, @RequestBody UserDto userDto) {
+    @PatchMapping("/{user-id}")
+    public ResponseEntity<UserDto> patchUser(@PathVariable(name = "user-id") Long userId, @RequestBody UserDto userDto) {
         UserDto patchUser = userService.patchUser(userId, userDto);
         log.info("Received PATCH request patchUser with userId: {}", userId);
         return new ResponseEntity<>(patchUser, HttpStatus.OK);
     }
 
-    @GetMapping("/{user_id}")
-    public ResponseEntity<UserDto> getUserById(@Valid @PathVariable(name = "user_id") Long userId) {
+    @GetMapping("/{user-id}")
+    public ResponseEntity<UserDto> getUserById(@Valid @PathVariable(name = "user-id") Long userId) {
         UserDto user = userService.getUserById(userId);
         log.info("Received GET request getUserById with userId: {}", userId);
         return new ResponseEntity<>(user, HttpStatus.OK);
@@ -50,8 +50,8 @@ public class UserController {
         return new ResponseEntity<>(userDtoList, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{user_id}")
-    public ResponseEntity<Void> deleteUser(@Valid @PathVariable(name = "user_id") Long userId) {
+    @DeleteMapping("/{user-id}")
+    public ResponseEntity<Void> deleteUser(@Valid @PathVariable(name = "user-id") Long userId) {
         userService.deleteUser(userId);
         log.info("Received DELETE request to delete user with userId: {}", userId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
