@@ -1,74 +1,134 @@
 package ru.practicum.shareit.item.service;
 
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.model.BookingStatus;
+import ru.practicum.shareit.booking.storage.BookingRepository;
+import ru.practicum.shareit.exception.ExceptionUtils;
+import ru.practicum.shareit.exception.ValidationException;
+import ru.practicum.shareit.item.dto.*;
+import ru.practicum.shareit.item.model.Comment;
+import ru.practicum.shareit.item.model.CommentMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.model.ItemMapper;
+import ru.practicum.shareit.item.storage.CommentRepository;
 import ru.practicum.shareit.item.storage.ItemRepository;
+import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.storage.UserRepository;
-import ru.practicum.shareit.validation.exeption.NotFoundException;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
-@Slf4j
+@RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
-
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
+    private final BookingRepository bookingRepository;
 
     @Override
-    public ItemDto createItem(Long userId, ItemDto itemDto) {
-        if (!userRepository.contains(userId)) {
-            throw new NotFoundException("User not found");
-        }
-        Item item = ItemMapper.toItem(itemDto);
-        Item createdItem = itemRepository.create(userId, item);
-        return ItemMapper.toItemDto(createdItem);
+    public ItemInfoResponseDto create(final long userId, final ItemCreateRequestDto itemCreateRequestDto) {
+        final User owner = getUserOrThrowError(userId);
+        final Item newItem = ItemMapper.toModel(owner, itemCreateRequestDto);
+        final Item saved = itemRepository.save(newItem);
+        return ItemMapper.toDto(saved);
     }
 
     @Override
-    public ItemDto patchItem(Long userId, Long itemId, ItemDto itemDto) {
-        if (!itemRepository.contains(itemId)) {
-            throw new NotFoundException("Item not found");
+    public ItemInfoResponseDto update(final long userId, final long itemId,
+                                      final ItemUpdateRequestDto itemUpdateRequestDto) {
+        final User owner = getUserOrThrowError(userId);
+        final Item original = getItemOrThrowError(itemId);
+        final Item newItem = ItemMapper.toModel(owner, original, itemUpdateRequestDto);
+        updateEntityIfCorrect(original, newItem);
+        return ItemMapper.toDto(itemRepository.save(original));
+
+    }
+
+    private void updateEntityIfCorrect(final Item original, final Item newItem) {
+        updateNameIfCorrect(original, newItem);
+        updateDescriptionIfCorrect(original, newItem);
+        updateAvailableIfCorrect(original, newItem);
+    }
+
+    private void updateNameIfCorrect(final Item original, final Item newItem) {
+        if (!Objects.isNull(newItem.getName()) && !original.getName().equals(newItem.getName())) {
+            original.setName(newItem.getName());
         }
-        if (!userRepository.contains(userId)) {
-            throw new NotFoundException("User not found");
+    }
+
+    private void updateDescriptionIfCorrect(final Item original, final Item newItem) {
+        if (!Objects.isNull(newItem.getDescription()) && !original.getDescription().equals(newItem.getDescription())) {
+            original.setDescription(newItem.getDescription());
         }
-        Item item = ItemMapper.toItem(itemDto);
-        Item updatedItem = itemRepository.patch(userId, itemId, item);
-        return ItemMapper.toItemDto(updatedItem);
+    }
+
+    private void updateAvailableIfCorrect(final Item original, final Item newItem) {
+        if (!Objects.isNull(newItem.getAvailable()) && !original.getAvailable() == newItem.getAvailable()) {
+            original.setAvailable(newItem.getAvailable());
+        }
     }
 
     @Override
-    public ItemDto getItemById(Long itemId) {
-        Item item = itemRepository.getById(itemId);
-        return ItemMapper.toItemDto(item);
+    public ItemFullInfoResponseDto get(final long itemId) {
+        final Item original = getItemOrThrowError(itemId);
+        final List<Booking> bookings = bookingRepository.findByItemIdAndBookingStatus(itemId, BookingStatus.APPROVED);
+        final LocalDateTime now = LocalDateTime.now();
+        final Optional<Booking> lastBooking = bookings.stream()
+                .filter(booking -> booking.getEnd().isAfter(now))
+                .max(Comparator.comparing(Booking::getEnd));
+        final Optional<Booking> nextBooking = bookings.stream()
+                .filter(booking -> booking.getStart().isAfter(now))
+                .min(Comparator.comparing(Booking::getStart));
+        final List<Comment> comments = commentRepository.findAllByItemId(itemId);
+        return ItemMapper.toFullDto(original, comments, lastBooking, nextBooking);
     }
 
     @Override
-    public List<ItemDto> getAllItemsByUserId(Long userId) {
-        List<Item> items = itemRepository.getAllByUserId(userId);
-        List<ItemDto> list = new ArrayList<>();
-        for (Item item : items) {
-            ItemDto itemDto = ItemMapper.toItemDto(item);
-            list.add(itemDto);
-        }
-        return list;
+    public List<ItemInfoResponseDto> getAll(final long userId, final Pageable pageable) {
+        getUserOrThrowError(userId);
+        return itemRepository.findAllByOwnerId(userId, pageable).stream()
+                .map(ItemMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<ItemDto> searchItems(String text) {
-        List<Item> items = itemRepository.search(text);
-        List<ItemDto> list = new ArrayList<>();
-        for (Item item : items) {
-            ItemDto itemDto = ItemMapper.toItemDto(item);
-            list.add(itemDto);
+    public List<ItemInfoResponseDto> search(final String text, final Pageable pageable) {
+        if (Objects.isNull(text) || text.isBlank()) {
+            return List.of();
         }
-        return list;
+        return itemRepository.search(text, pageable).stream()
+                .map(ItemMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public CommentInfoResponseDto addComment(final long userId, final long itemId,
+                                             final CommentAddRequestDto requestDto) {
+        final User user = getUserOrThrowError(userId);
+        final Item item = getItemOrThrowError(itemId);
+        final List<Booking> bookings = bookingRepository.findByBookerIdAndItemIdAndBookingStatusAndEndBefore(userId,
+                itemId, BookingStatus.APPROVED, LocalDateTime.now(), PageRequest.of(1 / 10, 1));
+        if (bookings.isEmpty()) {
+            throw new ValidationException(String.format("user = %s didnt book this item = %s", userId, itemId));
+        }
+        final Comment comment = CommentMapper.toModel(user, item, requestDto);
+        comment.setCreated(LocalDateTime.now());
+        return CommentMapper.toDto(commentRepository.save(comment));
+    }
+
+    private User getUserOrThrowError(final long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> ExceptionUtils.createNotFoundException(userId));
+    }
+
+    private Item getItemOrThrowError(final long itemId) {
+        return itemRepository.findById(itemId).orElseThrow(
+                () -> ExceptionUtils.createNotFoundException(itemId));
     }
 }

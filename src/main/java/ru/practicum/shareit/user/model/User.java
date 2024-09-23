@@ -1,28 +1,27 @@
 package ru.practicum.shareit.user.model;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Builder;
-import lombok.Value;
 
-/**
- * TODO Sprint add-controllers.
- */
-@Value
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+@Entity
+@Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
 @Builder
+@EqualsAndHashCode(of = {"id"})
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class User {
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     Long id;
-    @NotBlank(message = "Имя пользователя не должно быть пустым")
+    @Column(name = "name", nullable = false)
     String name;
-    @Email(message = "Электронная почта должна иметь формат адреса электронной почты")
-    @NotBlank(message = "Электронная почта не должна быть пустой")
+    @Column(name = "email", nullable = false, unique = true)
     String email;
-
-    public User withId(Long id) {
-        if (id != null && id.equals(this.id)) {
-            return this;
-        }
-        return new User(id, this.name, this.email);
-    }
 }

@@ -4,56 +4,65 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import ru.practicum.shareit.user.dto.UserDto;
+import ru.practicum.shareit.user.dto.UserCreateRequestDto;
+import ru.practicum.shareit.user.dto.UserInfoResponseDto;
+import ru.practicum.shareit.user.dto.UserUpdateRequestDto;
 import ru.practicum.shareit.user.servise.UserService;
 
 import java.util.List;
 
-/**
- * TODO Sprint add-controllers.
- */
 @RestController
 @RequestMapping(path = "/users")
-@Slf4j
 @RequiredArgsConstructor
+@Slf4j
+@Validated
 public class UserController {
-
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto userDto) {
-        UserDto createdUser = userService.createUser(userDto);
-        log.info("Received POST request createUser");
-        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
+    @ResponseStatus(HttpStatus.OK)
+    public UserInfoResponseDto create(@RequestBody @Valid final UserCreateRequestDto userCreateRequestDto) {
+        log.info("request POST /users body = {}", userCreateRequestDto);
+        final UserInfoResponseDto result = userService.create(userCreateRequestDto);
+        log.info("response POST /users body = {}", result);
+        return result;
     }
 
     @PatchMapping("/{user-id}")
-    public ResponseEntity<UserDto> patchUser(@PathVariable(name = "user-id") Long userId, @RequestBody UserDto userDto) {
-        UserDto patchUser = userService.patchUser(userId, userDto);
-        log.info("Received PATCH request patchUser with userId: {}", userId);
-        return new ResponseEntity<>(patchUser, HttpStatus.OK);
+    @ResponseStatus(HttpStatus.OK)
+    public UserInfoResponseDto update(@RequestBody @Valid final UserUpdateRequestDto userUpdateRequestDto,
+                                      @PathVariable("user-id") final long userId) {
+        log.info("request PATH /users/{} body = {}", userId, userUpdateRequestDto);
+        final UserInfoResponseDto result = userService.update(userUpdateRequestDto, userId);
+        log.info("response PATH /users/{} body = {}", userId, result);
+        return result;
     }
 
     @GetMapping("/{user-id}")
-    public ResponseEntity<UserDto> getUserById(@Valid @PathVariable(name = "user-id") Long userId) {
-        UserDto user = userService.getUserById(userId);
-        log.info("Received GET request getUserById with userId: {}", userId);
-        return new ResponseEntity<>(user, HttpStatus.OK);
+    @ResponseStatus(HttpStatus.OK)
+    public UserInfoResponseDto get(@PathVariable("user-id") final long userId) {
+        log.info("request GET /users/{}", userId);
+        final UserInfoResponseDto result = userService.get(userId);
+        log.info("response GET /users/{} body = {}", userId, result);
+        return result;
     }
 
     @GetMapping
-    public ResponseEntity<List<UserDto>> getAllUsers() {
-        List<UserDto> userDtoList = userService.getAllUsers();
-        log.info("Received GET request getAllUsers.");
-        return new ResponseEntity<>(userDtoList, HttpStatus.OK);
+    @ResponseStatus(HttpStatus.OK)
+    public List<UserInfoResponseDto> getAll() {
+        log.info("request GET /users");
+        final List<UserInfoResponseDto> result = userService.getAll();
+        log.info("response GET /users body = {}", result);
+        return result;
     }
 
     @DeleteMapping("/{user-id}")
-    public ResponseEntity<Void> deleteUser(@Valid @PathVariable(name = "user-id") Long userId) {
-        userService.deleteUser(userId);
-        log.info("Received DELETE request to delete user with userId: {}", userId);
-        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    @ResponseStatus(HttpStatus.OK)
+    public void delete(@PathVariable("user-id") final long userId) {
+        log.info("request DELETE /users/{}", userId);
+        userService.delete(userId);
+        log.info("response DELETE /users/{}", userId);
     }
 }
