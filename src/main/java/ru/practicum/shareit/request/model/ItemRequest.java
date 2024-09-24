@@ -13,10 +13,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Getter
-@Setter
-@ToString
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Data
 public class ItemRequest {
     @Id
     @Column(name = "request_id")

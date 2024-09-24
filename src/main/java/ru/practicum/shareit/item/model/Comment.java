@@ -12,10 +12,8 @@ import java.time.LocalDateTime;
 @Table(name = "comments")
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-@Setter
 @Builder
-@ToString
+@Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Comment {
     @Id

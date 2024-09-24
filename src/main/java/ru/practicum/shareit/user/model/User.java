@@ -7,14 +7,12 @@ import lombok.experimental.FieldDefaults;
 
 @Entity
 @Table(name = "users")
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 @Builder
 @EqualsAndHashCode(of = {"id"})
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Data
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
