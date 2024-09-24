@@ -11,11 +11,9 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "bookings")
 @Builder
-@Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
+@Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Booking {
     @Id

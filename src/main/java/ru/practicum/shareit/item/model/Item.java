@@ -8,13 +8,11 @@ import ru.practicum.shareit.user.model.User;
 
 @Entity
 @Table(name = "items")
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(of = {"id"})
-@ToString
+@Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Item {
     @Id
