@@ -161,9 +161,10 @@ class ItemServiceImpl implements ItemService {
         List<Booking> bookings = bookingRepository
                 .searchForBookerIdAndItemId(userId, itemId, LocalDateTime.now(), PageRequest.of(0, 1))
                 .toList();
-        if (bookings.isEmpty()){
+        if (bookings.isEmpty()) {
             throw new IncorrectCommentatorException(
-                    "Комментарии могут оставлять только те пользователи, которые брали вещь в аренду");}
+                    "Комментарии могут оставлять только те пользователи, которые брали вещь в аренду");
+        }
 
         Comment comment = commentMapper.toCommentFromCommentIncDto(commentIncDto);
 
