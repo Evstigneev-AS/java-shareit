@@ -5,8 +5,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.exception.IncorrectCommentatorException;
 import ru.practicum.shareit.exception.IncorrectItemIdException;
 import ru.practicum.shareit.exception.IncorrectRequestIdException;
 import ru.practicum.shareit.exception.IncorrectUserIdException;
@@ -292,7 +295,12 @@ public class ItemControllerTests {
         when(itemService.addComment(any(), anyLong(), anyLong()))
                 .thenReturn(new CommentOutDto(1L, "user", "text", LocalDateTime.now()));
 
+
         CommentIncDto comment = new CommentIncDto("comment");
+        if (false) {
+            throw new IncorrectCommentatorException(
+                    "Комментарии могут оставлять только те пользователи, которые брали вещь в аренду");
+        }
         mvc.perform(post("/items/1/comment")
                         .content(mapper.writeValueAsString(comment))
                         .characterEncoding(StandardCharsets.UTF_8)
