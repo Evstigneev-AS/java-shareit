@@ -158,22 +158,20 @@ public class ItemControllerTests {
 
     @Test
     void createCommentWithIncorrectCommentatorExceptionTest() throws Exception {
-        // Настройка: сервис бросает исключение IncorrectCommentatorException
         when(itemService.addComment(any(), anyLong(), any()))
                 .thenThrow(new IncorrectCommentatorException("Неверный комментатор: пользователь не может оставить комментарий."));
 
         CommentIncDto commentIncDto = new CommentIncDto("Great item!");
-        // Выполнение запроса, который вызывает исключение
         mvc.perform(post("/items/1/comment")
                         .content(mapper.writeValueAsString(commentIncDto))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .header(userIdHead, 1))
-                .andExpect(status().isBadRequest())  // Ожидаем статус 400
-                .andExpect(jsonPath("$.status").value(400))  // Проверяем, что статус в JSON — 400
-                .andExpect(jsonPath("$.error").value("Неверный комментатор: пользователь не может оставить комментарий."))  // Проверяем сообщение об ошибке
-                .andExpect(jsonPath("$.path").value("/items"));  // Проверяем путь, где возникла ошибка
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Неверный комментатор: пользователь не может оставить комментарий."))
+                .andExpect(jsonPath("$.path").value("/items"));
     }
 
     @Test
