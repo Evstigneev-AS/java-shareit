@@ -157,6 +157,26 @@ public class ItemControllerTests {
     }
 
     @Test
+    void createCommentWithIncorrectCommentatorExceptionTest() throws Exception {
+        // Настройка: сервис бросает исключение IncorrectCommentatorException
+        when(itemService.addComment(any(), anyLong(), any()))
+                .thenThrow(new IncorrectCommentatorException("Неверный комментатор: пользователь не может оставить комментарий."));
+
+        CommentIncDto commentIncDto = new CommentIncDto("Great item!");
+        // Выполнение запроса, который вызывает исключение
+        mvc.perform(post("/items/1/comment")
+                        .content(mapper.writeValueAsString(commentIncDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header(userIdHead, 1))
+                .andExpect(status().isBadRequest())  // Ожидаем статус 400
+                .andExpect(jsonPath("$.status").value(400))  // Проверяем, что статус в JSON — 400
+                .andExpect(jsonPath("$.error").value("Неверный комментатор: пользователь не может оставить комментарий."))  // Проверяем сообщение об ошибке
+                .andExpect(jsonPath("$.path").value("/items"));  // Проверяем путь, где возникла ошибка
+    }
+
+    @Test
     void getItemTest() throws Exception {
         UserDto owner = getOwner();
         when(itemService.getItem(anyLong(), anyLong()))
@@ -292,13 +312,7 @@ public class ItemControllerTests {
     void addCommentTest() throws Exception {
         when(itemService.addComment(any(), anyLong(), anyLong()))
                 .thenReturn(new CommentOutDto(1L, "user", "text", LocalDateTime.now()));
-
-
         CommentIncDto comment = new CommentIncDto("comment");
-        if (false) {
-            throw new IncorrectCommentatorException(
-                    "Комментарии могут оставлять только те пользователи, которые брали вещь в аренду");
-        }
         mvc.perform(post("/items/1/comment")
                         .content(mapper.writeValueAsString(comment))
                         .characterEncoding(StandardCharsets.UTF_8)
