@@ -7,6 +7,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.shareit.exception.IncorrectCommentatorException;
 import ru.practicum.shareit.exception.IncorrectItemIdException;
 import ru.practicum.shareit.exception.IncorrectRequestIdException;
 import ru.practicum.shareit.exception.IncorrectUserIdException;
@@ -156,6 +157,24 @@ public class ItemControllerTests {
     }
 
     @Test
+    void createCommentWithIncorrectCommentatorExceptionTest() throws Exception {
+        when(itemService.addComment(any(), anyLong(), any()))
+                .thenThrow(new IncorrectCommentatorException("Неверный комментатор: пользователь не может оставить комментарий."));
+
+        CommentIncDto commentIncDto = new CommentIncDto("Great item!");
+        mvc.perform(post("/items/1/comment")
+                        .content(mapper.writeValueAsString(commentIncDto))
+                        .characterEncoding(StandardCharsets.UTF_8)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header(userIdHead, 1))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Неверный комментатор: пользователь не может оставить комментарий."))
+                .andExpect(jsonPath("$.path").value("/items"));
+    }
+
+    @Test
     void getItemTest() throws Exception {
         UserDto owner = getOwner();
         when(itemService.getItem(anyLong(), anyLong()))
@@ -291,7 +310,6 @@ public class ItemControllerTests {
     void addCommentTest() throws Exception {
         when(itemService.addComment(any(), anyLong(), anyLong()))
                 .thenReturn(new CommentOutDto(1L, "user", "text", LocalDateTime.now()));
-
         CommentIncDto comment = new CommentIncDto("comment");
         mvc.perform(post("/items/1/comment")
                         .content(mapper.writeValueAsString(comment))

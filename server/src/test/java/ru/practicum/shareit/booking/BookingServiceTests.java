@@ -19,6 +19,7 @@ import ru.practicum.shareit.user.dto.UserDto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
 @Transactional
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE,
         properties = "spring.profiles.active=test")
@@ -271,5 +272,10 @@ public class BookingServiceTests {
 
     private ItemOutDto createItemOutDto(Long userId) {
         return itemService.createItem(new ItemIncDto("item", "description", true, null), userId);
+    }
+
+    @Test
+    void getBookingsStatusException(){
+
     }
 }
